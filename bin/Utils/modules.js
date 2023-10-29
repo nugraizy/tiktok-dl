@@ -40,7 +40,6 @@ ${result?.users.signature ? `📄 ${result?.users.signature}\n` : ''}https://tik
 	} else {
 		const { result } = obj;
 		const { result: res } = await clientUser.search(result?.author.username);
-		console.log(res);
 		const caption = `
 ${result?.author.nickname} (@${result?.author.username}) ${res?.users.verified ? '✅' : '❎'}
 👥 ${formatNumber(res?.stats.followerCount || 0)} · 👤 ${formatNumber(res?.stats.followingCount || 0)} · 💖 ${formatNumber(
