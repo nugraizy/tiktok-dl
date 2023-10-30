@@ -7,7 +7,7 @@ const { postUrlReg } = require('./Utils/modules');
 const cli = meow(
 	`
 	Usage
-	  $ tiktok-api [,input]
+	  $ tiktok-api [,flags]
 	Options
 	  --username, -u  TikTok username
 	  --download, -d  TikTok post URL
