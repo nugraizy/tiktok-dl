@@ -16,9 +16,6 @@ const resolvePathOutput = (outputDir) => {
 		outputPath = path.join(cwd, outputDir);
 	}
 	outputPath = path.normalize(outputPath);
-	if (!existsSync(outputPath)) {
-		return null;
-	}
 	return outputPath;
 };
 

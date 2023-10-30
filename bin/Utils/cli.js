@@ -26,7 +26,7 @@ const logger = winston.createLogger({
 		})
 	]
 });
-const askQuestions = async (type, question, { clientPost, clientUser, main }, validator) => {
+const askQuestions = async (type, question, { clientPost, clientUser, ask, output }, validator) => {
 	if (type === 'user') {
 		const { answer } = await inquirer.prompt([
 			{
@@ -40,7 +40,7 @@ const askQuestions = async (type, question, { clientPost, clientUser, main }, va
 		const data = await clientUser?.search(answer);
 		if (!data) {
 			logger.error(answer + ' Not found.');
-			await main?.();
+			await ask?.(output);
 		}
 
 		const caption = await _parse('user', data, { clientUser });
@@ -58,7 +58,7 @@ const askQuestions = async (type, question, { clientPost, clientUser, main }, va
 		const data = await clientPost?.download(answer);
 		if (!data) {
 			logger.error(answer + ' Not found.');
-			await main?.();
+			await ask?.(output);
 		}
 		const caption = await _parse('post', data, {
 			clientUser,

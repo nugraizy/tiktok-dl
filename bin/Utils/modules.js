@@ -21,7 +21,7 @@ const formatNumber = (number) => {
 	const value = (number / 10 ** unit).toFixed(1);
 	return `${value}${units[unit / 3 - 1]}`;
 };
-const _parse = async (type, obj, { clientPost, clientUser }) => {
+const _parse = async (type, obj, { clientUser } = {}) => {
 	if (type === 'user') {
 		const { result } = obj;
 		const caption = `
@@ -82,7 +82,7 @@ const downloadFiles = (urls, fileName, dir, folderName) =>
 	new Promise(async (resolve, reject) => {
 		try {
 			if (!fs.existsSync(`${dir}/@${folderName}`)) {
-				fs.mkdirSync(`${dir}/@${folderName}`);
+				fs.mkdirSync(`${dir}/@${folderName}`, { recursive: true });
 			}
 
 			if (Array.isArray(urls)) {
@@ -94,7 +94,7 @@ const downloadFiles = (urls, fileName, dir, folderName) =>
 					});
 					const stream = data.data.pipe(fs.createWriteStream(`${dir}/@${folderName}/${i + 1} · ${fileName}`));
 					const totalLength = data.headers['content-length'];
-					const progressBar = new Progress(`Downloading [:bar] :percent :etas "${i + 1} · ${fileName}"`, {
+					const progressBar = new Progress(`Downloading [:bar] :percent :etas => "${i + 1} · ${fileName}"`, {
 						width: 50,
 						complete: chalk.green('='),
 						incomplete: ' ',
@@ -114,7 +114,7 @@ const downloadFiles = (urls, fileName, dir, folderName) =>
 				});
 				const stream = data.data.pipe(fs.createWriteStream(`${dir}/@${folderName}/${fileName}`));
 				const totalLength = data.headers['content-length'];
-				const progressBar = new Progress(`Downloading [:bar] :percent :etas "${fileName}"`, {
+				const progressBar = new Progress(`Downloading [:bar] :percent :etas => "${fileName}"`, {
 					width: 50,
 					complete: chalk.green('='),
 					incomplete: ' ',
@@ -131,10 +131,16 @@ const downloadFiles = (urls, fileName, dir, folderName) =>
 
 const delay = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const userUrlReg = /@[\w.]+/g;
+const postUrlReg =
+	/(https:\/\/www.tiktok.com\/@([a-zA-Z0-9_.]+)\/video\/([0-9]+)|https:\/\/(vm|vt)?.tiktok.com\/([a-zA-Z0-9_.]+))/g;
+
 module.exports = {
 	_parse,
 	downloadFiles,
 	delay,
 	formatNumber,
-	insertAtIndex
+	insertAtIndex,
+	userUrlReg,
+	postUrlReg
 };

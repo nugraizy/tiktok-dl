@@ -1,58 +1,70 @@
 #! /usr/bin/env node
-const { DownloadPost } = require('./Utils/download-post.js');
-const { SearchUser } = require('./Utils/search-user.js');
-const { delay, downloadFiles, insertAtIndex } = require('./Utils/modules.js');
-const { askOptions, askQuestions, logger } = require('./Utils/cli.js');
-const { VALIDATOR } = require('./Utils/validator.js');
+const meow = require('meow');
+const { ask } = require('./Utils/question');
+const { handler } = require('./Utils/handler');
+const { postUrlReg } = require('./Utils/modules');
 
-const clientUser = new SearchUser();
-const clientPost = new DownloadPost();
-
-let downloadPath;
-const DEFAULT_OPTIONS_ACT = ['User', 'Post', 'Exit'];
-
-const main = async () => {
-	try {
-		const options = await askOptions(
-			downloadPath ? insertAtIndex(DEFAULT_OPTIONS_ACT, 2, 'Path') : DEFAULT_OPTIONS_ACT,
-			'Choose options'
-		);
-		if (options === 'Path') {
-			downloadPath = null;
-		}
-		if (!downloadPath) {
-			downloadPath = await askQuestions('path', 'Where would you like the output file to be saved?', {}, VALIDATOR.path);
-		}
-		if (options === 'User') {
-			const response = await askQuestions('user', 'Type TikTok username :', { clientUser, main }, VALIDATOR.username);
-			console.log(response.caption);
-			const options = await askOptions(['Yes', 'No', 'Exit'], 'Do you want to download the avatar?');
-			if (options === 'Yes') {
-				logger.info('Downloading Avatar');
-				await downloadFiles(response.url, 'Avatar ' + response.fileName, downloadPath, response.username);
-				await delay(1000);
+const cli = meow(
+	`
+	Usage
+	  $ tiktok-api [,input]
+	Options
+	  --username, -u  TikTok username
+	  --download, -d  TikTok post URL
+	Examples
+	  $ tiktok-api
+	  $ tiktok-api -u username
+	  $ tiktok-api -d https://www.tiktok.com/@username/video/1234567891234567891
+	  $ tiktok-api https://www.tiktok.com/@username https://vt.tiktok.com/ZSNxxxx
+	  $ tiktok-api -d https://vt.tiktok.com/ZSNxxxx -u username -o output
+`,
+	{
+		flags: {
+			output: {
+				type: 'string',
+				alias: 'o'
+			},
+			username: {
+				type: 'string',
+				alias: 'u'
+			},
+			download: {
+				type: 'string',
+				alias: 'u'
 			}
-		} else if (options === 'Post') {
-			const response = await askQuestions('post', 'Paste TikTok URL :', { clientPost, clientUser, main }, VALIDATOR.download);
-			console.log(response.caption);
-			const options = await askOptions(['Yes', 'No', 'Exit'], 'Do you want to download the avatar?');
-
-			if (options === 'Yes') {
-				logger.info('Downloading Avatar');
-				await downloadFiles(response.avatar, 'Avatar' + response.fileNameImage, downloadPath, response.username);
-				await delay(1000);
-			}
-			logger.info('Downloading Media');
-			await downloadFiles(response.url, response.fileName, downloadPath, response.username);
-			await delay(2000);
 		}
-		await main();
-	} catch (error) {
-		console.log(error);
-		process.exit(0);
 	}
-};
+);
 
 (async () => {
-	await main();
+	if (cli.flags.help || cli.flags.h) {
+		console.log(cli.help);
+		process.exit(0);
+	}
+
+	if (cli.flags.version || cli.flags.v) {
+		console.log(cli.pkg.version);
+		process.exit(0);
+	}
+
+	if (Object.keys(cli.flags).length === 0) {
+		await ask(cli.flags.output);
+	} else {
+		if (cli.flags.username) {
+			await handler('user', { cli, input: cli.flags.username });
+		}
+
+		if (cli.flags.download) {
+			await handler('post', { cli, input: cli.flags.download });
+		}
+		for (const input of cli.input) {
+			if (postUrlReg.test(input)) {
+				await handler('post', { cli, input });
+				continue;
+			}
+			await handler('user', { cli, input });
+		}
+	}
+
+	return;
 })();
